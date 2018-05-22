@@ -11,14 +11,21 @@
   vars_files:
     - ./login.yml
   tasks:
-    - name: remove lab 1
+    - name: remove Server 3
       bigip_node:
         name: "Server3"
         address: 10.1.100.1
         provider: "{{rest}}"
       delegate_to: localhost
 
-    - name: remove lab 5
+    - name: remove iAPP
+      bigip_iapp_template:
+        provider: "{{ rest }}"
+        content: "{{ lookup('file', '../tmp/f5.http.v1.2.0.tmpl') }}"
+        state: absent
+      delegate_to: localhost
+
+    - name: remove task 2
       block:
        - name: Delete virtual server
          bigip_virtual_server:
@@ -27,11 +34,13 @@
            name: red_vs
            destination: "10.1.20.120"
            port: "80"
+           pool: red_pool
            all_profiles:
              - http
            all_rules:
              - maint_pg_irule
-         state: absent
+             - _sys_https_redirect
+           state: absent
          delegate_to: localhost
 
        - name: delete pool
@@ -49,12 +58,3 @@
             state: absent
          delegate_to: localhost
          with_items: "{{ servers }}"
-
-
-
-    - name: remove lab 6
-      bigip_iapp_template:
-        provider: "{{ rest }}"
-        content: "{{ lookup('file', '../tmp/f5.http.v1.2.0.tmpl') }}"
-        state: absent
-      delegate_to: localhost

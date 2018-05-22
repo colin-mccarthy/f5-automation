@@ -1,0 +1,62 @@
+---
+
+- name: Lab 5 - Create application
+  connection: local
+  gather_facts: no
+  hosts: all
+
+  vars:
+    servers:
+      - { name: Server1, address: "10.1.10.100" }
+      - { name: Server2, address: "10.1.10.101" }
+  vars_files:
+    - ./login.yml
+
+
+  tasks:
+     - name: Create nodes using with_items
+       bigip_node:
+          provider: "{{rest}}"
+          name: "{{ item.name }}"
+          address: "{{ item.address }}"
+       delegate_to: localhost
+       with_items: "{{ servers }}"
+
+     - name: Create pool
+       bigip_pool:
+          provider: "{{rest}}"
+          name: red_pool
+       delegate_to: localhost
+
+     - name: Create pool members
+       bigip_pool_member:
+          provider: "{{rest}}"
+          pool: red_pool
+          name: "{{ item.name }}"
+          port: 80
+       delegate_to: localhost
+       with_items: "{{ servers }}"
+
+
+     - name: Install maintenance page iRule
+       bigip_irule:
+          provider: "{{rest}}"
+          module: ltm
+          name: maint_pg_irule
+          content: "{{ lookup('file', '../tmp/maint_pg.irule') }}"
+       delegate_to: localhost
+
+     - name: Create virtual server
+       bigip_virtual_server:
+         provider: "{{rest}}"
+         partition: Common
+         name: red_vs
+         destination: "10.1.20.120"
+         port: "80"
+         pool: red_pool
+         all_profiles:
+           - http
+         all_rules:
+           - maint_pg_irule
+           - _sys_https_redirect
+       delegate_to: localhost

@@ -1,0 +1,27 @@
+---
+- name: Lab1 - Create a node
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  vars_files:
+    - ./login.yml
+
+  tasks:
+     - name: Create node using bigip_node module
+       bigip_node:
+          name: "Server3"
+          address: 10.1.100.1
+          provider: "{{rest}}"
+       delegate_to: localhost
+
+     # - name: Create node using bigip_node module
+     #   bigip_node:
+     #      name: "Server1"
+     #      address: 10.1.100.1
+     #      server: 13.59.13.2
+     #      server_port: 8443
+     #      validate_certs: no
+     #      user: admin
+     #      password: ansible123
+     #   delegate_to: localhost

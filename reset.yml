@@ -1,0 +1,60 @@
+---
+- name: Lab1 - Create a node
+  hosts: all
+  gather_facts: no
+  connection: local
+
+  vars:
+    servers:
+      - { name: Server1, address: "10.1.10.100" }
+      - { name: Server2, address: "10.1.10.101" }
+  vars_files:
+    - ./login.yml
+  tasks:
+    - name: remove lab 1
+      bigip_node:
+        name: "Server3"
+        address: 10.1.100.1
+        provider: "{{rest}}"
+      delegate_to: localhost
+
+    - name: remove lab 5
+      block:
+       - name: Delete virtual server
+         bigip_virtual_server:
+           provider: "{{rest}}"
+           partition: Common
+           name: red_vs
+           destination: "10.1.20.120"
+           port: "80"
+           all_profiles:
+             - http
+           all_rules:
+             - maint_pg_irule
+         state: absent
+         delegate_to: localhost
+
+       - name: delete pool
+         bigip_pool:
+            provider: "{{rest}}"
+            name: red_pool
+            state: absent
+         delegate_to: localhost
+
+       - name: delete nodes using with_items
+         bigip_node:
+            provider: "{{rest}}"
+            name: "{{ item.name }}"
+            address: "{{ item.address }}"
+            state: absent
+         delegate_to: localhost
+         with_items: "{{ servers }}"
+
+
+
+    - name: remove lab 6
+      bigip_iapp_template:
+        provider: "{{ rest }}"
+        content: "{{ lookup('file', '../tmp/f5.http.v1.2.0.tmpl') }}"
+        state: absent
+      delegate_to: localhost

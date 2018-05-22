@@ -1,0 +1,17 @@
+---
+
+- name: Remove latest HTTP iApp template
+  hosts: all
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - ./login.yml
+
+  tasks:
+       - name: Install HTTP iApp
+         bigip_iapp_template:
+           provider: "{{ rest }}"
+           content: "{{ lookup('file', '../tmp/f5.http.v1.2.0.tmpl') }}"
+           state: present
+         delegate_to: localhost

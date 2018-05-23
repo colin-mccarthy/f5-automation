@@ -16,6 +16,7 @@
         name: "Server3"
         address: 10.1.100.1
         provider: "{{rest}}"
+        state: absent
       delegate_to: localhost
 
     - name: remove iAPP
